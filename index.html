@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        #container {
+            position: relative;
+            display: inline-block;
+        }
+
+        #video {
+            border: 2px solid #ccc;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        h1 {
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+    <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+</head>
+<body>
+    <h1>Face Recognition App</h1>
+    <div id="container">
+        <video id="video" width="720" height="560" autoplay></video>
+        <div id="overlay"></div>
+    </div>
+    <button id="startButton">Start Face Recognition</button>
+
+    <script>
+        const video = document.getElementById('video');
+        const overlay = document.getElementById('overlay');
+        const startButton = document.getElementById('startButton');
+
+        async function startVideo() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+            video.srcObject = stream;
+            video.play();
+        }
+
+        async function loadFaceApiModels() {
+            await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+            await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+            await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+        }
+
+        async function recognizeFace() {
+            const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+            overlay.innerHTML = ''; // Clear previous overlays
+
+            detections.forEach(detection => {
+                const box = detection.detection.box;
+                const drawBox = new faceapi.draw.DrawBox(box, { label: "Face" });
+                drawBox.draw(overlay);
+            });
+        }
+
+        startButton.addEventListener('click', async () => {
+            await loadFaceApiModels();
+            startVideo();
+            setInterval(recognizeFace, 100);
+        });
+    </script>
+</body>
+</html>
