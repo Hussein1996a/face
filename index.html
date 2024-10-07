@@ -3,61 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Recognition App</title>
+    <title>Face Recognition</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-
-        #container {
-            position: relative;
-            display: inline-block;
-        }
-
-        #video {
-            border: 2px solid #ccc;
-        }
-
-        #overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
+        video {
             width: 100%;
-            height: 100%;
+            max-width: 600px;
+            border: 1px solid black;
         }
-
-        h1 {
-            margin: 20px 0;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 20px;
+        canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
         }
     </style>
-    <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
 </head>
 <body>
-    <h1>Face Recognition App</h1>
-    <div id="container">
-        <video id="video" width="720" height="560" autoplay></video>
-        <div id="overlay"></div>
-    </div>
-    <button id="startButton">Start Face Recognition</button>
+    <h1>Face Recognition</h1>
+    <button id="start">Start Video</button>
+    <video id="video" autoplay></video>
+    <canvas id="canvas"></canvas>
 
     <script>
         const video = document.getElementById('video');
-        const overlay = document.getElementById('overlay');
-        const startButton = document.getElementById('startButton');
 
         async function startVideo() {
             const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
             video.srcObject = stream;
-            video.play();
         }
 
         async function loadFaceApiModels() {
@@ -68,16 +40,16 @@
 
         async function recognizeFace() {
             const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
-            overlay.innerHTML = ''; // Clear previous overlays
+            const canvas = document.getElementById('canvas');
+            faceapi.matchDimensions(canvas, video);
 
-            detections.forEach(detection => {
-                const box = detection.detection.box;
-                const drawBox = new faceapi.draw.DrawBox(box, { label: "Face" });
-                drawBox.draw(overlay);
-            });
+            const resizedDetections = faceapi.resizeResults(detections, video);
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            faceapi.draw.drawDetections(canvas, resizedDetections);
+            faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
         }
 
-        startButton.addEventListener('click', async () => {
+        document.getElementById('start').addEventListener('click', async () => {
             await loadFaceApiModels();
             startVideo();
             setInterval(recognizeFace, 100);
