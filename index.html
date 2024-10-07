@@ -53,10 +53,12 @@
             faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
         }
 
-        document.getElementById('start').addEventListener('click', async () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             await loadFaceApiModels();
-            startVideo();
-            setInterval(recognizeFace, 100);
+            document.getElementById('start').addEventListener('click', () => {
+                startVideo();
+                setInterval(recognizeFace, 100);
+            });
         });
     </script>
 </body>
